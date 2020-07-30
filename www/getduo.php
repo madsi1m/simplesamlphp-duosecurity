@@ -37,7 +37,7 @@ $state = SimpleSAML_Auth_State::loadState($id, 'duosecurity:request');
 
 if (array_key_exists('core:SP', $state)) {
     $spentityid = $state['core:SP'];
-} else if (array_key_exists('saml:sp:State', $state)) {
+} else if (array_key_exists('saml:sp:State', $state) && isSet($state['saml:sp:State']['core:SP'])) {
     $spentityid = $state['saml:sp:State']['core:SP'];
 } else {
     $spentityid = 'UNKNOWN';
