@@ -1,7 +1,7 @@
 #duo_iframe {
     width: 100%;
     min-width: 304px;
-    /*max-width: 620px;*/
-    height: 330px;
+    min-height: 330px;
+    height: calc(100vw * 0.53);
     background: transparent;
 }
