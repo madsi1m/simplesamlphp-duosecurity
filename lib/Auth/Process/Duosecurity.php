@@ -18,6 +18,8 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
 
     private $_duoComplete = null;
 
+    private $_enabled = true;
+
     private $_akey;
 
     private $_ikey;
@@ -41,6 +43,10 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
     {
         parent::__construct($config, $reserved);
         assert('is_array($config)');
+
+        if (array_key_exists('enabled', $config)) {
+            $this->_enabled = $config['enabled'];
+        }
 
         $this->_host = $config['host'];
         $this->_akey = $config['akey'];
@@ -90,6 +96,11 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         assert('array_key_exists("Source", $state)');
         assert('array_key_exists("entityid", $state["Source"])');
         assert('array_key_exists("metadata-set", $state["Source"])');
+
+        // Bypass DUO if it is not enabled in config
+        if (!$this->_enabled) {
+            return;
+        }
 
         $spEntityId = $state['Destination']['entityid'];
         $idpEntityId = $state['Source']['entityid'];
