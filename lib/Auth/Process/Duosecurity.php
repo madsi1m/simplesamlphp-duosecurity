@@ -67,7 +67,7 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
     private function auditlogInit() {
         $db = \SimpleSAML\Database::getInstance();
         $table = $db->applyPrefix("aarnet_auditlog");
-        $query = $db->write("CREATE TABLE IF NOT EXISTS $table (id INT(16) PRIMARY KEY NOT NULL, domain VARCHAR(255) NOT NULL, uid VARCHAR(255) NOT NULL, data TEXT NOT NULL)", false);
+        $query = $db->write("CREATE TABLE IF NOT EXISTS $table (id INT(64) PRIMARY KEY NOT NULL, domain VARCHAR(255) NOT NULL, uid VARCHAR(255) NOT NULL, data TEXT NOT NULL)", false);
     }
 
     private function auditlog($uid, $message) {
