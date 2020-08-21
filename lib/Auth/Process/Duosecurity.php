@@ -60,6 +60,31 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         if (array_key_exists('usernameAttribute', $config)) {
             $this->_usernameAttribute = $config['usernameAttribute'];
         }
+        
+        $this->auditlogInit();
+    }
+
+    private function auditlogInit() {
+        $db = \SimpleSAML\Database::getInstance();
+        $table = $db->applyPrefix("aarnet_auditlog");
+        $query = $db->write("CREATE TABLE IF NOT EXISTS $table (id INT(16) PRIMARY KEY NOT NULL, domain VARCHAR(255) NOT NULL, uid VARCHAR(255) NOT NULL, data TEXT NOT NULL)", false);
+    }
+
+    private function auditlog($uid, $message) {
+        $domain=explode('@',$uid,2);
+        if (!isSet($domain[1])) {
+            $domain[1]='UNKNOWN';
+        }
+
+        $db = \SimpleSAML\Database::getInstance();
+        $table = $db->applyPrefix("aarnet_auditlog");
+        $values = [
+            'id' => round(microtime(true) * 1000),
+            'domain' => $domain[1],
+            'uid' => $uid,
+            'data' => $message,
+        ];
+        $query = $db->write("INSERT INTO $table (id, domain, uid, data) VALUES (:id, :domain, :uid, :data)", $values);
     }
 
     /**
@@ -97,8 +122,16 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         assert('array_key_exists("entityid", $state["Source"])');
         assert('array_key_exists("metadata-set", $state["Source"])');
 
+        $uid = $attributes[$this->userattribute];
+        # Just in case there is multiple values for the attribute
+        if (is_array($uid)) {
+            $uid = $uid[0];
+        }
+        $uid = strtolower($uid);
+
         // Bypass DUO if it is not enabled in config
         if (!$this->_enabled) {
+            $this->auditlog($uid, 'User: '.$uid.' is bypassing DUO because DUO is not enabled');
             return;
         }
 
@@ -127,6 +160,7 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
 
         // Bypass DUO if already authenticated with the idP and DUO
         if (isset($state['AuthnInstant']) && $isAuthorized) {
+            $this->auditlog($uid, 'User: '.$uid.' is bypassing DUO because user is already authenticated with DUO');
             return;
         }
 
