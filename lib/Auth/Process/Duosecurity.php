@@ -30,7 +30,7 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
 
     private $_authSources = "all";
 
-    private $_usernameAttribute = "username";
+    private $_usernameattribute = "username";
 
     private $_sourceipattribute = "HTTP_X_FORWARDED_FOR";
 
@@ -58,8 +58,8 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         if (array_key_exists('authSources', $config)) {
             $this->_authSources = $config['authSources'];
         }
-        if (array_key_exists('usernameAttribute', $config)) {
-            $this->_usernameAttribute = $config['usernameAttribute'];
+        if (array_key_exists('usernameattribute', $config)) {
+            $this->_usernameattribute = $config['usernameattribute'];
         }
         if (array_key_exists('sourceipattribute', $config)) {
             $this->_sourceipattribute = $config['sourceipattribute'];
@@ -127,7 +127,7 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         assert('array_key_exists("entityid", $state["Source"])');
         assert('array_key_exists("metadata-set", $state["Source"])');
 
-        $uid = $attributes[$this->userattribute];
+        $uid = $attributes[$this->_usernameattribute];
         # Just in case there is multiple values for the attribute
         if (is_array($uid)) {
             $uid = $uid[0];
@@ -177,7 +177,7 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         $state['duosecurity:skey'] = $this->_skey;
         $state['duosecurity:host'] = $this->_host;
         $state['duosecurity:authSources'] = $this->_authSources;
-        $state['duosecurity:usernameAttribute'] = $this->_usernameAttribute;
+        $state['duosecurity:usernameattribute'] = $this->_usernameattribute;
 
         // User interaction nessesary. Throw exception on isPassive request	
         if (isset($state['isPassive']) && $state['isPassive'] == true) {
