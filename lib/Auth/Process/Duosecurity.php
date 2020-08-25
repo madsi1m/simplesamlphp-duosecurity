@@ -32,6 +32,8 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
 
     private $_usernameAttribute = "username";
 
+    private $_sourceipattribute = "HTTP_X_FORWARDED_FOR";
+
     /**
      * Initialize Duo Security 
      *
@@ -56,9 +58,11 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         if (array_key_exists('authSources', $config)) {
             $this->_authSources = $config['authSources'];
         }
-
         if (array_key_exists('usernameAttribute', $config)) {
             $this->_usernameAttribute = $config['usernameAttribute'];
+        }
+        if (array_key_exists('sourceipattribute', $config)) {
+            $this->_sourceipattribute = $config['sourceipattribute'];
         }
         
         $this->auditlogInit();
@@ -67,7 +71,7 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
     private function auditlogInit() {
         $db = \SimpleSAML\Database::getInstance();
         $table = $db->applyPrefix("aarnet_auditlog");
-        $query = $db->write("CREATE TABLE IF NOT EXISTS $table (id BIGINT UNSIGNED PRIMARY KEY NOT NULL, domain VARCHAR(255) NOT NULL, uid VARCHAR(255) NOT NULL, data TEXT NOT NULL)", false);
+        $query = $db->write("CREATE TABLE IF NOT EXISTS $table (id BIGINT UNSIGNED PRIMARY KEY NOT NULL, domain VARCHAR(255) NOT NULL, uid VARCHAR(255) NOT NULL, sourceip VARCHAR(255) NOT NULL, data TEXT NOT NULL)", false);
     }
 
     private function auditlog($uid, $message) {
@@ -82,9 +86,10 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
             'id' => round(microtime(true) * 1000),
             'domain' => $domain[1],
             'uid' => $uid,
+            'sourceip' => $_SERVER[$this->_sourceipattribute],
             'data' => $message,
         ];
-        $query = $db->write("INSERT INTO $table (id, domain, uid, data) VALUES (:id, :domain, :uid, :data)", $values);
+        $query = $db->write("INSERT INTO $table (id, domain, uid, sourceip, data) VALUES (:id, :domain, :uid, :sourceip, :data)", $values);
     }
 
     /**
