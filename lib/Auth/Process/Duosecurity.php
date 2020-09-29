@@ -31,8 +31,10 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
     private $_authSources = "all";
 
     private $_usernameAttribute = "username";
-
     private $_sourceipattribute = "HTTP_X_FORWARDED_FOR";
+    private $_url;
+    private $_userpass;
+    private $_action;
 
     /**
      * Initialize Duo Security 
@@ -64,32 +66,38 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         if (array_key_exists('sourceipattribute', $config)) {
             $this->_sourceipattribute = $config['sourceipattribute'];
         }
-        
-        $this->auditlogInit();
-    }
-
-    private function auditlogInit() {
-        $db = \SimpleSAML\Database::getInstance();
-        $table = $db->applyPrefix("aarnet_auditlog");
-        $query = $db->write("CREATE TABLE IF NOT EXISTS $table (id BIGINT UNSIGNED PRIMARY KEY NOT NULL, domain VARCHAR(255) NOT NULL, uid VARCHAR(255) NOT NULL, sourceip VARCHAR(255) NOT NULL, data TEXT NOT NULL)", false);
+        if (array_key_exists('url', $config)) {
+            $this->_url = $config['url'];
+        }
+        if (array_key_exists('userpass', $config)) {
+            $this->_userpass = $config['userpass'];
+        }
+        if (array_key_exists('action', $config)) {
+            $this->_action = $config['action'];
+        }
     }
 
     private function auditlog($uid, $message) {
-        $domain=explode('@',$uid,2);
-        if (!isSet($domain[1])) {
-            $domain[1]='UNKNOWN';
-        }
-
-        $db = \SimpleSAML\Database::getInstance();
-        $table = $db->applyPrefix("aarnet_auditlog");
-        $values = [
-            'id' => round(microtime(true) * 1000),
-            'domain' => $domain[1],
-            'uid' => $uid,
-            'sourceip' => $_SERVER[$this->_sourceipattribute],
-            'data' => $message,
-        ];
-        $query = $db->write("INSERT INTO $table (id, domain, uid, sourceip, data) VALUES (:id, :domain, :uid, :sourceip, :data)", $values);
+      $data = array(
+        'message' => $message,
+        'action' => $this->_action,
+        'sourceip' => $_SERVER[$this->_sourceipattribute],
+      );
+      $ch = curl_init($this->_url.'/'.$uid);
+      $postString = http_build_query($data, '', '&');
+      curl_setopt($ch, CURLOPT_USERPWD, $this->_userpass);
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $postString);
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      $response = curl_exec($ch);
+      curl_close($ch);
+      $xml = simplexml_load_string($response);
+      \SimpleSAML\Logger::debug("auditlogmessage: xml = ".print_r($xml,true));
+      if ($xml !== false && isSet($xml->meta->status) && $xml->meta->status == 'ok') {
+        \SimpleSAML\Logger::debug("auditlogmessage: logged \"$message\" for \"$uid\"");
+      } else {
+        throw new \Exception("Can not log to SDS Audit");
+      }
     }
 
     /**
