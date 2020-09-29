@@ -34,6 +34,7 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
     private $_sourceipattribute = "HTTP_X_FORWARDED_FOR";
     private $_url;
     private $_userpass;
+    private $_useragent;
     private $_action;
 
     /**
@@ -72,6 +73,9 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
         if (array_key_exists('userpass', $config)) {
             $this->_userpass = $config['userpass'];
         }
+        if (array_key_exists('useragent', $config)) {
+            $this->_useragent = $config['useragent'];
+        }
         if (array_key_exists('action', $config)) {
             $this->_action = $config['action'];
         }
@@ -86,6 +90,7 @@ class sspmod_duosecurity_Auth_Process_Duosecurity extends SimpleSAML_Auth_Proces
       $ch = curl_init($this->_url.'/'.$uid);
       $postString = http_build_query($data, '', '&');
       curl_setopt($ch, CURLOPT_USERPWD, $this->_userpass);
+      curl_setopt($ch, CURLOPT_USERAGENT, $this->useragent);
       curl_setopt($ch, CURLOPT_POST, 1);
       curl_setopt($ch, CURLOPT_POSTFIELDS, $postString);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
